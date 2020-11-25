@@ -28,7 +28,7 @@
 
         [Fact, Trait("Category", "AppendStream")]
         public async Task
-            When_append_stream_second_time_with_no_stream_expected_and_same_messages_then_should_then_should_be_idempotent()
+            When_append_stream_second_time_with_no_stream_expected_and_same_messages_then_should_be_idempotent()
         {
             // Idempotency
             const string streamId = "stream-1";
@@ -42,7 +42,7 @@
         }
 
         [Fact, Trait("Category", "AppendStream")]
-        public async Task When_append_stream_second_time_with_no_stream_expected_and_same_messages_then_should_then_should_have_expected_result()
+        public async Task When_append_stream_second_time_with_no_stream_expected_and_same_messages_then_should_have_expected_result()
         {
             // Idempotency
             const string streamId = "stream-1";
@@ -713,7 +713,7 @@
         }
 
         [Fact, Trait("Category", "AppendStream")]
-        public async Task When_append_stream_concurrently_with_no_stream_expected_and_same_messages_then_should_then_should_have_expected_result()
+        public async Task When_append_stream_concurrently_with_no_stream_expected_and_same_messages_then_should_have_expected_result()
         {
             // Idempotency
             const string streamId = "stream-1";
@@ -732,7 +732,25 @@
         }
         
         [Fact, Trait("Category", "AppendStream")]
-        public async Task When_append_to_different_streams_concurrently_with_no_stream_expected_and_same_messages_then_should_then_should_have_expected_result()
+        public async Task When_append_to_different_streams_concurrently_with_no_stream_expected_and_same_messages_then_should_have_expected_result()
+        {
+            // Idempotency
+            const string streamPrefix = "stream-";
+            
+            var messages = CreateNewStreamMessages(1, 2);
+            var tasks = new List<Task<AppendResult>>();
+            for(var index = 0; index < 10; index++)
+            {
+                tasks.Add(Store.AppendToStream(streamPrefix + index, ExpectedVersion.NoStream, messages));
+            }
+            
+            var results = await Task.WhenAll(tasks);
+
+            Assert.All(results, result => result.CurrentVersion.ShouldBe(1));
+        }
+
+        [Fact, Trait("Category", "AppendStream")]
+        public async Task When_append_to_same_stream_concurrently_with_any_stream_expected_and_different_messages_then_should_not_throw()
         {
             // Idempotency
             const string streamPrefix = "stream-";
