@@ -6,6 +6,7 @@
     using Shouldly;
     using SqlStreamStore.Streams;
     using Xunit;
+    using System.Linq;
 
     public partial class AcceptanceTests
     {
@@ -749,21 +750,20 @@
             Assert.All(results, result => result.CurrentVersion.ShouldBe(1));
         }
 
-        [Fact, Trait("Category", "AppendStream2")]
+        [Fact, Trait("Category", "AppendStream")]
         public async Task When_append_to_same_stream_concurrently_with_expected_version_any_and_different_messages_then_should_not_throw()
         {
-            const string streamPrefix = "stream-";
+            const string streamName = "stream";
 
             var messages = CreateNewStreamMessages(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
             var tasks = new List<Task<AppendResult>>();
             foreach (var message in messages)
             {
-                tasks.Add(Store.AppendToStream(streamPrefix + index, ExpectedVersion.Any, [message]));
+                tasks.Add(Store.AppendToStream(streamName, ExpectedVersion.Any, new []{message}));
             }
 
             var results = await Task.WhenAll(tasks);
-
-            Assert.All(results, result => result.CurrentVersion.ShouldBe(1));
+            results.Select(r => r.CurrentVersion).Max().ShouldBe(9);
         }
     }
 }
